@@ -14,13 +14,10 @@ let waitingQueue = [];
 io.on('connection', (socket) => {
     onlineUsers++;
     io.emit('online_users', onlineUsers);
-    console.log('User connected:', socket.id);
 
     socket.on('join_queue', (data) => {
         socket.language = data.language || 'english';
         socket.alias = data.alias || 'Anonymous';
-        
-        console.log(`User ${socket.id} (${socket.alias}) joined queue for ${socket.language}`);
 
         const matchIndex = waitingQueue.findIndex(user => user.language === socket.language && user.id !== socket.id);
 
@@ -33,8 +30,6 @@ io.on('connection', (socket) => {
 
             socket.currentRoom = roomName;
             partner.currentRoom = roomName;
-
-            console.log(`Matched! Room: ${roomName}`);
 
             io.to(socket.id).emit('matched', {
                 room: roomName,
@@ -64,16 +59,13 @@ io.on('connection', (socket) => {
         socket.to(data.room).emit('ice-candidate', data);
     });
 
+    // Logika pengiriman pesan chat
     socket.on('send_message', (data) => {
-        console.log("LOG CHAT: Pesan masuk dari client:", data);
         if (data && data.room && data.message) {
             socket.to(data.room).emit('receive_message', {
                 message: data.message,
                 senderAlias: socket.alias || 'Anonymous'
             });
-            console.log("LOG CHAT: Pesan sukses diteruskan ke room:", data.room);
-        } else {
-            console.log("LOG CHAT: Pesan ditolak! Room atau message kosong.", data);
         }
     });
 
@@ -84,8 +76,6 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         onlineUsers = Math.max(0, onlineUsers - 1);
         io.emit('online_users', onlineUsers);
-        console.log('User disconnected:', socket.id);
-
         waitingQueue = waitingQueue.filter(user => user.id !== socket.id);
         leaveCurrentRoom(socket);
     });
