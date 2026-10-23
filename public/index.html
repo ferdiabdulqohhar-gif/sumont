@@ -718,7 +718,11 @@
                 try {
                     closeConnection();
                     stopTimer();
-                    if (timerDisplay) timerDisplay.innerText = statusText;
+                    if (timerDisplay && window.lastCallDuration) {
+    timerDisplay.innerText = "Duration: " + window.lastCallDuration;
+} else if (timerDisplay) {
+    timerDisplay.innerText = statusText;
+}
                     if (chatModal) chatModal.classList.add('hidden');
                     if (chatNotifDot) chatNotifDot.classList.add('hidden');
                     if (viewHome) viewHome.classList.add('hidden');
@@ -800,7 +804,7 @@
                 secondsElapsed++;
                 const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
                 const secs = String(secondsElapsed % 60).padStart(2, '0');
-                timerDisplay.innerText = `${mins}:${secs}`;
+                window.lastCallDuration = `${mins}:${secs}`; timerDisplay.innerText = window.lastCallDuration;
             }, 1000);
         }
 
