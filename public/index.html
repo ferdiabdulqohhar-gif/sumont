@@ -534,9 +534,6 @@
             controlsIncall.classList.remove('hidden');
             timerDisplay.innerText = "";
             partnerNameDisplay.innerText = "Connecting...";
-            const statusHeader = document.getElementById("call-status-header");
-            if (statusHeader) statusHeader.innerText = "";
-            if (reportBtn) reportBtn.classList.add('hidden');
             
             socket.emit('join_queue', { language: langSelect.value, alias: randomAlias });
         }
@@ -722,21 +719,12 @@
                 try {
                     closeConnection();
                     stopTimer();
-                    const statusHeader = document.getElementById("call-status-header");
-                    if (statusHeader) {
-                        statusHeader.innerText = statusText || "Call ended";
-                        statusHeader.style.display = "block";
-                    }
                     // Set status header text to statusText ("Call ended")
                     const callStatusEl = document.getElementById("call-status") || document.querySelector(".call-status-text");
                     if (callStatusEl) callStatusEl.innerText = statusText;
                     if (timerDisplay) {
     if (window.lastCallDuration) {
-        if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
-            timerDisplay.innerText = "";
-        } else {
         timerDisplay.innerText = window.lastCallDuration;
-        }
     } else {
         timerDisplay.innerText = "00:00";
     }
@@ -815,23 +803,14 @@
         }
 
         function startTimer() {
+            stopTimer();
             secondsElapsed = 0;
             timerDisplay.innerText = "00:00";
             timerInterval = setInterval(() => {
                 secondsElapsed++;
-                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
-                const secs = String(secondsElapsed % 60).padStart(2, "0");
-                window.lastCallDuration = `${mins}:${secs}`;
-                timerDisplay.innerText = window.lastCallDuration;
-            }, 1000);
-        }:${secs}`;
-                timerDisplay.innerText = window.lastCallDuration;
-            }, 1000);
-        }:${secs}`; if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
-                window.lastCallDuration = `${mins}:${secs}`;     timerDisplay.innerText = "";
-                window.lastCallDuration = `${mins}:${secs}`; } else {
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
+                const secs = String(secondsElapsed % 60).padStart(2, '0');
                 window.lastCallDuration = `${mins}:${secs}`; timerDisplay.innerText = window.lastCallDuration;
-                window.lastCallDuration = `${mins}:${secs}`; }
             }, 1000);
         }
 
