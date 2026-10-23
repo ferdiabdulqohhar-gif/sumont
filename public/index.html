@@ -732,7 +732,11 @@
                     if (callStatusEl) callStatusEl.innerText = statusText;
                     if (timerDisplay) {
     if (window.lastCallDuration) {
+        if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
+            timerDisplay.innerText = "";
+        } else {
         timerDisplay.innerText = window.lastCallDuration;
+        }
     } else {
         timerDisplay.innerText = "00:00";
     }
@@ -818,7 +822,11 @@
                 secondsElapsed++;
                 const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
                 const secs = String(secondsElapsed % 60).padStart(2, '0');
+                window.lastCallDuration = `${mins}:${secs}`; if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
+                window.lastCallDuration = `${mins}:${secs}`;     timerDisplay.innerText = "";
+                window.lastCallDuration = `${mins}:${secs}`; } else {
                 window.lastCallDuration = `${mins}:${secs}`; timerDisplay.innerText = window.lastCallDuration;
+                window.lastCallDuration = `${mins}:${secs}`; }
             }, 1000);
         }
 
