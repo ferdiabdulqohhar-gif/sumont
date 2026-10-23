@@ -534,6 +534,8 @@
             controlsIncall.classList.remove('hidden');
             timerDisplay.innerText = "";
             partnerNameDisplay.innerText = "Connecting...";
+            const statusHeader = document.getElementById("call-status-header");
+            if (statusHeader) statusHeader.innerText = "";
             
             socket.emit('join_queue', { language: langSelect.value, alias: randomAlias });
         }
@@ -719,6 +721,11 @@
                 try {
                     closeConnection();
                     stopTimer();
+                    const statusHeader = document.getElementById("call-status-header");
+                    if (statusHeader) {
+                        statusHeader.innerText = statusText || "Call ended";
+                        statusHeader.style.display = "block";
+                    }
                     // Set status header text to statusText ("Call ended")
                     const callStatusEl = document.getElementById("call-status") || document.querySelector(".call-status-text");
                     if (callStatusEl) callStatusEl.innerText = statusText;
