@@ -715,63 +715,74 @@
         });
 
         function showEndedState(statusText) {
-            setTimeout(() => {
-                try {
-                    closeConnection();
-                    stopTimer();
-                    // Set status header text to statusText ("Call ended")
-                    const callStatusEl = document.getElementById("call-status") || document.querySelector(".call-status-text");
-                    if (callStatusEl) callStatusEl.innerText = statusText;
-                    if (timerDisplay) {
-    if (window.lastCallDuration) {
-        timerDisplay.innerText = window.lastCallDuration;
-    } else {
-        timerDisplay.innerText = "00:00";
-    }
-}
-                    if (chatModal) chatModal.classList.add('hidden');
-                    if (chatNotifDot) chatNotifDot.classList.add('hidden');
-                    if (viewHome) viewHome.classList.add('hidden');
-                    if (viewCall) viewCall.classList.remove('hidden');
+    setTimeout(() => {
+        try {
+            closeConnection();
+            stopTimer();
+            
+            const callStatusEl = document.getElementById("call-status") || document.querySelector(".call-status-text");
+            const isConnecting = (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "");
 
-                    if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
-                        if (partnerNameDisplay) partnerNameDisplay.innerText = "";
-                        if (reportBtn) reportBtn.classList.add('hidden');
-                    } else {
-                        if (partnerNameDisplay) partnerNameDisplay.innerText = currentPartnerName;
-                        if (reportBtn) reportBtn.classList.remove('hidden');
-                    }
-
-                    if (chatMsgs && endedChatHistory) {
-                        if (chatMsgs.children.length > 0) {
-                            endedChatHistory.innerHTML = chatMsgs.innerHTML;
-                            endedChatHistory.classList.remove('hidden');
-                        } else {
-                            endedChatHistory.classList.add('hidden');
-                        }
-                    }
-                    if (lastActionType === 'end') {
-                        if (endedActionPill) {
-                            endedActionPill.innerHTML = `
-                                <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-                                End
-                            `;
-                        }
-                    } else {
-                        if (endedActionPill) {
-                            endedActionPill.innerHTML = `
-                                <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-                                Next
-                            `;
-                        }
-                    }
-                    if (controlsIncall) controlsIncall.classList.add('hidden');
-                    if (controlsEnded) controlsEnded.classList.remove('hidden');
-                } catch (err) {
-                    console.error("Error showing ended state:", err);
+            if (isConnecting) {
+                if (callStatusEl) {
+                    callStatusEl.innerText = "";
+                    callStatusEl.style.display = "none";
                 }
-            }, 50);
+                if (timerDisplay) {
+                    timerDisplay.innerText = "";
+                    timerDisplay.style.display = "none";
+                }
+                if (partnerNameDisplay) partnerNameDisplay.innerText = "";
+                if (reportBtn) reportBtn.classList.add("hidden");
+            } else {
+                if (callStatusEl) {
+                    callStatusEl.innerText = statusText || "Call ended";
+                    callStatusEl.style.display = "";
+                }
+                if (timerDisplay) {
+                    timerDisplay.innerText = window.lastCallDuration || "00:00";
+                    timerDisplay.style.display = "";
+                }
+                if (partnerNameDisplay) partnerNameDisplay.innerText = currentPartnerName;
+                if (reportBtn) reportBtn.classList.remove("hidden");
+            }
+            
+            if (chatModal) chatModal.classList.add("hidden");
+            if (chatNotifDot) chatNotifDot.classList.add("hidden");
+            if (viewHome) viewHome.classList.add("hidden");
+            if (viewCall) viewCall.classList.remove("hidden");
+
+            if (chatMsgs && endedChatHistory) {
+                if (chatMsgs.children.length > 0) {
+                    endedChatHistory.innerHTML = chatMsgs.innerHTML;
+                    endedChatHistory.classList.remove("hidden");
+                } else {
+                    endedChatHistory.classList.add("hidden");
+                }
+            }
+            
+            if (lastActionType === "end") {
+                if (endedActionPill) {
+                    endedActionPill.innerHTML = `
+                        <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                        End
+                    `;
+                }
+            } else {
+                if (endedActionPill) {
+                    endedActionPill.innerHTML = `
+                        <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                        Next
+                    `;
+                }
+            }
+            if (controlsIncall) controlsIncall.classList.add("hidden");
+            if (controlsEnded) controlsEnded.classList.remove("hidden");
+        } catch (err) {
+            console.error("Error showing ended state:", err);
         }
+    }, 50);
+}
 
         function createPeerConnection(room) {
             closeConnection();
