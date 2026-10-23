@@ -718,10 +718,12 @@
                 try {
                     closeConnection();
                     stopTimer();
-                    if (timerDisplay && window.lastCallDuration) {
-    timerDisplay.innerText = "Duration: " + window.lastCallDuration;
-} else if (timerDisplay) {
-    timerDisplay.innerText = statusText;
+                    if (timerDisplay) {
+    if (window.lastCallDuration) {
+        timerDisplay.innerText = window.lastCallDuration;
+    } else {
+        timerDisplay.innerText = "00:00";
+    }
 }
                     if (chatModal) chatModal.classList.add('hidden');
                     if (chatNotifDot) chatNotifDot.classList.add('hidden');
