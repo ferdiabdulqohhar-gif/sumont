@@ -19,7 +19,13 @@ io.on('connection', (socket) => {
         socket.language = (data && data.language) || 'english';
         socket.alias = (data && data.alias) || 'Anonymous';
 
-        const matchIndex = waitingQueue.findIndex(user => user.language === socket.language && user.id !== socket.id);
+        // Cari partner yang bahasa sama, bukan diri sendiri, dan BUKAN partner terakhir (mencegah loop instan)
+        const matchIndex = waitingQueue.findIndex(user => 
+            user.language === socket.language && 
+            user.id !== socket.id && 
+            socket.lastPartnerId !== user.id &&
+            user.lastPartnerId !== socket.id
+        );
 
         if (matchIndex !== -1) {
             const partner = waitingQueue.splice(matchIndex, 1)[0];
@@ -30,6 +36,10 @@ io.on('connection', (socket) => {
 
             socket.currentRoom = roomName;
             partner.currentRoom = roomName;
+
+            // Catat partner terakhir untuk mencegah langsung nyambung lagi
+            socket.lastPartnerId = partner.id;
+            partner.lastPartnerId = socket.id;
 
             io.to(socket.id).emit('matched', {
                 room: roomName,
