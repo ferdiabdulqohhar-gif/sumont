@@ -18,14 +18,21 @@ io.on('connection', (socket) => {
     socket.on('join_queue', (data) => {
         socket.language = (data && data.language) || 'english';
         socket.alias = (data && data.alias) || 'Anonymous';
+        socket.queuedAt = Date.now(); // Catat waktu masuk antrean
 
-        // Cari partner yang bahasa sama, bukan diri sendiri, dan BUKAN partner terakhir (mencegah loop instan)
-        const matchIndex = waitingQueue.findIndex(user => 
-            user.language === socket.language && 
-            user.id !== socket.id && 
-            socket.lastPartnerId !== user.id &&
-            user.lastPartnerId !== socket.id
-        );
+        // Cari partner dengan sistem cerdas: 
+        // Utamakan orang lain. Tapi kalau >5 detik tidak ada orang lain (server sepi), izinkan mantan ketemu lagi biar tidak stuck abadi.
+        const matchIndex = waitingQueue.findIndex(user => {
+            if (user.language !== socket.language || user.id === socket.id) return false;
+
+            const isEx = (socket.lastPartnerId === user.id || user.lastPartnerId === socket.id);
+            if (!isEx) return true; // Bukan mantan, langsung sikat!
+
+            // Kalau mantan, cek apakah sudah menunggu lebih dari 5 detik (server sepi)
+            const timeA = Date.now() - (socket.queuedAt || 0);
+            const timeB = Date.now() - (user.queuedAt || 0);
+            return timeA > 5000 && timeB > 5000;
+        });
 
         if (matchIndex !== -1) {
             const partner = waitingQueue.splice(matchIndex, 1)[0];
