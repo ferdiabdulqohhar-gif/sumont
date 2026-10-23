@@ -8,81 +8,98 @@ const io = new Server(server);
 
 app.use(express.static('public'));
 
-let waitingUser = null;
+let onlineUsers = 0;
+let waitingQueue = [];
 
 io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
-    io.emit('online_users', io.engine.clientsCount);
+    onlineUsers++;
+    io.emit('online_users', onlineUsers);
+    console.log('User connected:', socket.id);
 
-    socket.on('join_queue', (data) => {
-        socket.language = data.language;
-        socket.alias = data.alias || "Anonymous";
+    socket.on('join_queue', (data) => {
+        socket.language = data.language || 'english';
+        socket.alias = data.alias || 'Anonymous';
+        
+        console.log(`User ${socket.id} (${socket.alias}) joined queue for ${socket.language}`);
 
-        if (waitingUser && waitingUser.id !== socket.id) {
-            const roomName = `room_${socket.id}_${waitingUser.id}`;
-            
-            socket.join(roomName);
-            waitingUser.join(roomName);
+        const matchIndex = waitingQueue.findIndex(user => user.language === socket.language && user.id !== socket.id);
 
-            socket.partnerId = waitingUser.id;
-            waitingUser.partnerId = socket.id;
+        if (matchIndex !== -1) {
+            const partner = waitingQueue.splice(matchIndex, 1)[0];
+            const roomName = `room_${socket.id}_${partner.id}`;
 
-            io.to(socket.id).emit('matched', {
-                room: roomName,
-                initiator: true,
-                partnerAlias: waitingUser.alias
-            });
+            socket.join(roomName);
+            partner.join(roomName);
 
-            io.to(waitingUser.id).emit('matched', {
-                room: roomName,
-                initiator: false,
-                partnerAlias: socket.alias
-            });
+            socket.currentRoom = roomName;
+            partner.currentRoom = roomName;
 
-            waitingUser = null;
-        } else {
-            waitingUser = socket;
-        }
-    });
+            console.log(`Matched! Room: ${roomName}`);
 
-    socket.on('offer', (data) => {
-        socket.to(data.room).emit('offer', { offer: data.offer });
-    });
+            io.to(socket.id).emit('matched', {
+                room: roomName,
+                initiator: true,
+                partnerAlias: partner.alias
+            });
 
-    socket.on('answer', (data) => {
-        socket.to(data.room).emit('answer', { answer: data.answer });
-    });
+            io.to(partner.id).emit('matched', {
+                room: roomName,
+                initiator: false,
+                partnerAlias: socket.alias
+            });
+        } else {
+            waitingQueue.push(socket);
+        }
+    });
 
-    socket.on('ice-candidate', (data) => {
-        socket.to(data.room).emit('ice-candidate', { candidate: data.candidate });
-    });
+    socket.on('offer', (data) => {
+        socket.to(data.room).emit('offer', data);
+    });
 
-    socket.on('leave_room', () => {
-        handleLeave(socket);
-    });
+    socket.on('answer', (data) => {
+        socket.to(data.room).emit('answer', data);
+    });
 
-    socket.on('disconnect', () => {
-        if (waitingUser === socket) {
-            waitingUser = null;
-        }
-        handleLeave(socket);
-        io.emit('online_users', io.engine.clientsCount);
-        console.log('User disconnected:', socket.id);
-    });
+    socket.on('ice-candidate', (data) => {
+        socket.to(data.room).emit('ice-candidate', data);
+    });
+
+    socket.on('send_message', (data) => {
+        console.log("LOG CHAT: Pesan masuk dari client:", data);
+        if (data && data.room && data.message) {
+            socket.to(data.room).emit('receive_message', {
+                message: data.message,
+                senderAlias: socket.alias || 'Anonymous'
+            });
+            console.log("LOG CHAT: Pesan sukses diteruskan ke room:", data.room);
+        } else {
+            console.log("LOG CHAT: Pesan ditolak! Room atau message kosong.", data);
+        }
+    });
+
+    socket.on('leave_room', () => {
+        leaveCurrentRoom(socket);
+    });
+
+    socket.on('disconnect', () => {
+        onlineUsers = Math.max(0, onlineUsers - 1);
+        io.emit('online_users', onlineUsers);
+        console.log('User disconnected:', socket.id);
+
+        waitingQueue = waitingQueue.filter(user => user.id !== socket.id);
+        leaveCurrentRoom(socket);
+    });
+
+    function leaveCurrentRoom(sock) {
+        if (sock.currentRoom) {
+            sock.to(sock.currentRoom).emit('partner_left');
+            sock.leave(sock.currentRoom);
+            sock.currentRoom = null;
+        }
+    }
 });
 
-function handleLeave(socket) {
-    if (socket.partnerId) {
-        io.to(socket.partnerId).emit('partner_left');
-        const partner = io.sockets.sockets.get(socket.partnerId);
-        if (partner) {
-            partner.partnerId = null;
-        }
-        socket.partnerId = null;
-    }
-}
-
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
