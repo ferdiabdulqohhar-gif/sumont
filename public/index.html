@@ -536,6 +536,7 @@
             partnerNameDisplay.innerText = "Connecting...";
             const statusHeader = document.getElementById("call-status-header");
             if (statusHeader) statusHeader.innerText = "";
+            if (reportBtn) reportBtn.classList.add('hidden');
             
             socket.emit('join_queue', { language: langSelect.value, alias: randomAlias });
         }
