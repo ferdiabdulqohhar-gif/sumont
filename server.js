@@ -16,8 +16,8 @@ io.on('connection', (socket) => {
     io.emit('online_users', onlineUsers);
 
     socket.on('join_queue', (data) => {
-        socket.language = data.language || 'english';
-        socket.alias = data.alias || 'Anonymous';
+        socket.language = (data && data.language) || 'english';
+        socket.alias = (data && data.alias) || 'Anonymous';
 
         const matchIndex = waitingQueue.findIndex(user => user.language === socket.language && user.id !== socket.id);
 
@@ -48,26 +48,35 @@ io.on('connection', (socket) => {
     });
 
     socket.on('offer', (data) => {
-        socket.to(data.room).emit('offer', data);
+        if (data && data.room) socket.to(data.room).emit('offer', data);
     });
 
     socket.on('answer', (data) => {
-        socket.to(data.room).emit('answer', data);
+        if (data && data.room) socket.to(data.room).emit('answer', data);
     });
 
     socket.on('ice-candidate', (data) => {
-        socket.to(data.room).emit('ice-candidate', data);
+        if (data && data.room) socket.to(data.room).emit('ice-candidate', data);
     });
 
-    // Logika pengiriman pesan chat
-    socket.on('send_message', (data) => {
-        if (data && data.room && data.message) {
-            socket.to(data.room).emit('receive_message', {
-                message: data.message,
+    // Universal message handler (mendukung berbagai jenis format dari frontend)
+    const handleIncomingMessage = (data) => {
+        const messageText = typeof data === 'string' ? data : (data?.message || data?.text);
+        const targetRoom = (typeof data === 'object' && data?.room) ? data.room : socket.currentRoom;
+
+        console.log("Pesan masuk:", { messageText, targetRoom });
+
+        if (targetRoom && messageText) {
+            socket.to(targetRoom).emit('receive_message', {
+                message: messageText,
                 senderAlias: socket.alias || 'Anonymous'
             });
         }
-    });
+    };
+
+    socket.on('send_message', handleIncomingMessage);
+    socket.on('message', handleIncomingMessage);
+    socket.on('chat_message', handleIncomingMessage);
 
     socket.on('leave_room', () => {
         leaveCurrentRoom(socket);
