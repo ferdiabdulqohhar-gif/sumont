@@ -815,14 +815,16 @@
         }
 
         function startTimer() {
-            stopTimer();
             secondsElapsed = 0;
             timerDisplay.innerText = "00:00";
             timerInterval = setInterval(() => {
                 secondsElapsed++;
-                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-                const secs = String(secondsElapsed % 60).padStart(2, '0');
-                window.lastCallDuration = `${mins}:${secs}`; if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
+                const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, "0");
+                const secs = String(secondsElapsed % 60).padStart(2, "0");
+                window.lastCallDuration = `${mins}:${secs}`;
+                timerDisplay.innerText = window.lastCallDuration;
+            }, 1000);
+        }:${secs}`; if (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "") {
                 window.lastCallDuration = `${mins}:${secs}`;     timerDisplay.innerText = "";
                 window.lastCallDuration = `${mins}:${secs}`; } else {
                 window.lastCallDuration = `${mins}:${secs}`; timerDisplay.innerText = window.lastCallDuration;
