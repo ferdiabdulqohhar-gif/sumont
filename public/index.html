@@ -5,13 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sumont</title>
     <script src="/socket.io/socket.io.js">
-        socket.on('update_online_count', (data) => {
-            const onlineElem = document.getElementById('online-count');
-            if (onlineElem) {
-                onlineElem.innerText = data.count;
-            }
-        });
-
 
         socket.on('update_online_count', (data) => {
             console.log("Online count received:", data.count);
@@ -516,9 +509,9 @@
 
         btnToggleSpeaker.classList.add('btn-active-speaker');
 
-        socket.on('online_users', (count) => {
+        socket.on('update_online_count', (data) => {
             if (onlineCountEl) {
-                onlineCountEl.innerText = count;
+                onlineCountEl.innerText = data.count;
             }
         });
 
