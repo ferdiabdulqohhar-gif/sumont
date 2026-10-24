@@ -511,6 +511,7 @@
         }
 
         async function startCall() {
+            isSearchingCall = true;
             isMuted = false;
             btnToggleMute.classList.remove('btn-off');
 
@@ -569,7 +570,10 @@
             }
         });
 
+        let isSearchingCall = false;
+
         function goToHome() {
+            isSearchingCall = false;
             closeConnection();
             socket.emit('leave_room');
             stopTimer();
@@ -649,6 +653,10 @@
         });
 
         socket.on('matched', async (data) => {
+            if (!isSearchingCall) {
+                socket.emit('leave_room');
+                return;
+            }
             currentRoom = data.room;
             currentPartnerName = data.partnerAlias || "Anonymous";
             partnerNameDisplay.innerText = currentPartnerName;
