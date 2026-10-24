@@ -107,7 +107,9 @@ setInterval(() => {
 }, 1000);
 
 io.on('connection', (socket) => {
-    // Kirim update angka online setiap ada yang terkoneksi
+    // Kirim langsung ke socket yang baru masuk agar langsung tampil tanpa refresh
+    socket.emit('update_online_count', { count: io.engine.clientsCount });
+    // Broadcast ke user lainnya
     broadcastOnlineCount();
 
     socket.on('join_queue', (data) => {
