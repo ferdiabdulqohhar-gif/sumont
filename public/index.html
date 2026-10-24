@@ -362,7 +362,7 @@
                 </div>
             </div>
             <div id="view-call" class="hidden">
-                <div id="call-status-header" style="font-size: 22px; font-weight: 600; color: #ffffff; margin-bottom: 6px;">Call ended</div>
+                <div id="call-status-header" style="font-size: 22px; font-weight: 600; color: #ffffff; margin-bottom: 6px;" class="hidden"></div>
                 <div id="partner-name-display" class="partner-name"></div>
                 <div id="timer-display" style="font-size: 16px; color: #94a3b8; margin-bottom: 8px;">00:00</div>
                 <div id="report-btn" class="report-link">Report & Block</div>
@@ -535,6 +535,13 @@
             timerDisplay.innerText = "";
             partnerNameDisplay.innerText = "Connecting...";
             
+            const headerEl = document.getElementById('call-status-header');
+            if (headerEl) {
+                headerEl.innerText = "";
+                headerEl.classList.add('hidden');
+            }
+            if (reportBtn) reportBtn.classList.add('hidden');
+
             socket.emit('join_queue', { language: langSelect.value, alias: randomAlias });
         }
 
@@ -645,6 +652,13 @@
             currentRoom = data.room;
             currentPartnerName = data.partnerAlias || "Anonymous";
             partnerNameDisplay.innerText = currentPartnerName;
+
+            const headerEl = document.getElementById('call-status-header');
+            if (headerEl) {
+                headerEl.innerText = "";
+                headerEl.classList.add('hidden');
+            }
+            if (reportBtn) reportBtn.classList.remove('hidden');
 
             // Saat tersambung (connected), pastikan Call ended disembunyikan dan Report & Block muncul
             const callStatusHeader = document.getElementById('call-status-header');
