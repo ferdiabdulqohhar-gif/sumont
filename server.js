@@ -126,6 +126,18 @@ io.on('connection', (socket) => {
     function leaveCurrentRoom(sock) {
         waitingQueue = waitingQueue.filter(u => u.id !== sock.id);
         if (sock.currentRoom) {
+            const roomClients = io.sockets.adapter.rooms.get(sock.currentRoom);
+            if (roomClients) {
+                for (const clientId of roomClients) {
+                    if (clientId !== sock.id) {
+                        const partnerSocket = io.sockets.sockets.get(clientId);
+                        sock.lastPartnerId = clientId;
+                        if (partnerSocket) {
+                            partnerSocket.lastPartnerId = sock.id;
+                        }
+                    }
+                }
+            }
             sock.to(sock.currentRoom).emit('partner_left');
             sock.leave(sock.currentRoom);
             sock.currentRoom = null;
