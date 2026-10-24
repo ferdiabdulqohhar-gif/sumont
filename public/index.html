@@ -512,6 +512,7 @@
 
         async function startCall() {
             isSearchingCall = true;
+            isSearchingCall = true;
             isMuted = false;
             btnToggleMute.classList.remove('btn-off');
 
@@ -653,6 +654,10 @@
         });
 
         socket.on('matched', async (data) => {
+            if (!isSearchingCall) {
+                socket.emit('leave_room');
+                return;
+            }
             if (!isSearchingCall) {
                 socket.emit('leave_room');
                 return;
