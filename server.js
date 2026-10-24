@@ -143,8 +143,7 @@ io.on('connection', (socket) => {
             sock.leave(sock.currentRoom);
             sock.currentRoom = null;
         }
-        // MUTLAK: Bersihkan dari antrean agar tidak nyangkut/diculik saat di beranda
-        waitingQueue = waitingQueue.filter(u => u.id !== sock.id);
+        // Biarkan antrean dikelola murni oleh join_queue dan matchUsers/disconnect
     }
 });
 
