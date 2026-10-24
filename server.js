@@ -124,6 +124,7 @@ io.on('connection', (socket) => {
     });
 
     function leaveCurrentRoom(sock) {
+        waitingQueue = waitingQueue.filter(u => u.id !== sock.id);
         if (sock.currentRoom) {
             sock.to(sock.currentRoom).emit('partner_left');
             sock.leave(sock.currentRoom);
