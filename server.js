@@ -11,6 +11,51 @@ app.use(express.static('public'));
 let onlineUsers = 0;
 let waitingQueue = [];
 
+function processQueue() {
+    if (waitingQueue.length < 2) return;
+
+    for (let i = 0; i < waitingQueue.length; i++) {
+        const user1 = waitingQueue[i];
+        
+        for (let j = i + 1; j < waitingQueue.length; j++) {
+            const user2 = waitingQueue[j];
+
+            if (user1.language !== user2.language) continue;
+
+            const isEx = (user1.lastPartnerId === user2.id || user2.lastPartnerId === user1.id);
+
+            if (!isEx) {
+                // Orang baru: Prioritas utama, langsung sikat tanpa syarat!
+                waitingQueue.splice(j, 1);
+                waitingQueue.splice(i, 1);
+                matchUsers(user1, user2);
+                return processQueue();
+            } else {
+                // Mantan: Jika antrean pas 2 orang (sepi) atau keduanya sudah > 5 detik, izinkan CLBK!
+                const time1 = Date.now() - (user1.queuedAt || 0);
+                const time2 = Date.now() - (user2.queuedAt || 0);
+                
+                const isOnlyThem = (waitingQueue.length === 2);
+                
+                if (isOnlyThem && (time1 > 5000 || time2 > 5000)) {
+                    waitingQueue.splice(j, 1);
+                    waitingQueue.splice(i, 1);
+                    matchUsers(user1, user2);
+                    return processQueue();
+                } else if (!isOnlyThem && time1 > 5000 && time2 > 5000) {
+                    waitingQueue.splice(j, 1);
+                    waitingQueue.splice(i, 1);
+                    matchUsers(user1, user2);
+                    return processQueue();
+                }
+            }
+        }
+    }
+}
+
+// Jalankan pengecekan antrean otomatis setiap 1 detik (Makcomblang Background)
+setInterval(processQueue, 1000);
+
 io.on('connection', (socket) => {
     onlineUsers++;
     io.emit('online_users', onlineUsers);
