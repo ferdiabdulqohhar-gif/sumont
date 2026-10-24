@@ -146,6 +146,14 @@ io.on('connection', (socket) => {
         if (data.room) socket.to(data.room).emit('ice-candidate', data);
     });
 
+        socket.on('send_message', (data) => {
+        if (socket.currentRoom && data && data.message) {
+            socket.to(socket.currentRoom).emit('receive_message', {
+                message: data.message
+            });
+        }
+    });
+
     socket.on('disconnect', () => {
         leaveCurrentRoom(socket);
         broadcastOnlineCount();
