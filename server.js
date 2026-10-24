@@ -143,7 +143,9 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         leaveCurrentRoom(socket);
-        broadcastOnlineCount();
+        setTimeout(() => {
+            broadcastOnlineCount();
+        }, 100);
     });
 });
 
