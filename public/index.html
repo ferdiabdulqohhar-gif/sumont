@@ -510,8 +510,9 @@
         btnToggleSpeaker.classList.add('btn-active-speaker');
 
         socket.on('update_online_count', (data) => {
-            if (onlineCountEl) {
-                onlineCountEl.innerText = data.count;
+            const el = document.getElementById('online-count');
+            if (el) {
+                el.innerText = data.count;
             }
         });
 
