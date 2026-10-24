@@ -748,11 +748,15 @@
             const callStatusEl = document.getElementById("call-status-header");
             const isConnecting = (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "");
 
+            // Pastikan teks status selalu "Call ended" dan TAMPIL saat panggilan diakhiri
+            if (callStatusEl) {
+                callStatusEl.innerText = statusText || "Call ended";
+                callStatusEl.classList.remove("hidden");
+                callStatusEl.style.display = "";
+            }
+
             if (isConnecting) {
-                if (callStatusEl) {
-                    callStatusEl.innerText = "";
-                    callStatusEl.classList.add("hidden");
-                }
+                // Jika mati saat masih connecting: sembunyikan timer & report button, bersihkan nama
                 if (timerDisplay) {
                     timerDisplay.innerText = "";
                     timerDisplay.style.display = "none";
@@ -760,11 +764,7 @@
                 if (partnerNameDisplay) partnerNameDisplay.innerText = "";
                 if (reportBtn) reportBtn.classList.add("hidden");
             } else {
-                if (callStatusEl) {
-                    callStatusEl.innerText = statusText || "Call ended";
-                    callStatusEl.classList.remove("hidden");
-                    callStatusEl.style.display = "";
-                }
+                // Jika mati setelah tersambung: tampilkan timer akhir, nama partner, & report button
                 if (timerDisplay) {
                     timerDisplay.innerText = window.lastCallDuration || "00:00";
                     timerDisplay.style.display = "";
