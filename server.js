@@ -11,6 +11,31 @@ app.use(express.static('public'));
 let onlineUsers = 0;
 let waitingQueue = [];
 
+function matchUsers(user1, user2) {
+    const roomName = `room_${user1.id}_${user2.id}`;
+
+    user1.join(roomName);
+    user2.join(roomName);
+
+    user1.currentRoom = roomName;
+    user2.currentRoom = roomName;
+
+    user1.lastPartnerId = user2.id;
+    user2.lastPartnerId = user1.id;
+
+    io.to(user1.id).emit('matched', {
+        room: roomName,
+        initiator: true,
+        partnerAlias: user2.alias
+    });
+
+    io.to(user2.id).emit('matched', {
+        room: roomName,
+        initiator: false,
+        partnerAlias: user1.alias
+    });
+}
+
 function processQueue() {
     if (waitingQueue.length < 2) return;
 
@@ -26,9 +51,9 @@ function processQueue() {
             const time1 = Date.now() - (user1.queuedAt || 0);
             const time2 = Date.now() - (user2.queuedAt || 0);
 
-            // LOGIKA MUTLAK:
-            // 1. Kalau bukan mantan (!isEx), sikat langsung!
-            // 2. Kalau mantan, tapi salah satu sudah nunggu > 5 detik, izinkan CLBK universal!
+            // LOGIKA:
+            // 1. Bukan mantan -> Langsung sikat!
+            // 2. Mantan -> Kalau salah satu sudah nunggu > 5 detik, izinkan CLBK!
             if (!isEx || time1 > 5000 || time2 > 5000) {
                 waitingQueue.splice(j, 1);
                 waitingQueue.splice(i, 1);
@@ -39,7 +64,7 @@ function processQueue() {
     }
 }
 
-// Jalankan pengecekan antrean otomatis setiap 1 detik (Makcomblang Background)
+// Jalankan pengecekan antrean otomatis setiap 1 detik
 setInterval(processQueue, 1000);
 
 io.on('connection', (socket) => {
@@ -49,50 +74,14 @@ io.on('connection', (socket) => {
     socket.on('join_queue', (data) => {
         socket.language = (data && data.language) || 'english';
         socket.alias = (data && data.alias) || 'Anonymous';
-        socket.queuedAt = Date.now(); // Catat waktu masuk antrean
 
-        // Cari partner dengan sistem cerdas: 
-        // Utamakan orang lain. Tapi kalau >5 detik tidak ada orang lain (server sepi), izinkan mantan ketemu lagi biar tidak stuck abadi.
-        const matchIndex = waitingQueue.findIndex(user => {
-            if (user.language !== socket.language || user.id === socket.id) return false;
+        // Cegah duplikat antrean
+        waitingQueue = waitingQueue.filter(u => u.id !== socket.id);
+        
+        socket.queuedAt = Date.now();
+        waitingQueue.push(socket);
 
-            const isEx = (socket.lastPartnerId === user.id || user.lastPartnerId === socket.id);
-            if (!isEx) return true; // Bukan mantan, langsung sikat!
-
-            // Kalau mantan, cek apakah sudah menunggu lebih dari 5 detik (server sepi)
-            const timeA = Date.now() - (socket.queuedAt || 0);
-            const timeB = Date.now() - (user.queuedAt || 0);
-            return timeA > 5000 && timeB > 5000;
-        });
-
-        if (matchIndex !== -1) {
-            const partner = waitingQueue.splice(matchIndex, 1)[0];
-            const roomName = `room_${socket.id}_${partner.id}`;
-
-            socket.join(roomName);
-            partner.join(roomName);
-
-            socket.currentRoom = roomName;
-            partner.currentRoom = roomName;
-
-            // Catat partner terakhir untuk mencegah langsung nyambung lagi
-            socket.lastPartnerId = partner.id;
-            partner.lastPartnerId = socket.id;
-
-            io.to(socket.id).emit('matched', {
-                room: roomName,
-                initiator: true,
-                partnerAlias: partner.alias
-            });
-
-            io.to(partner.id).emit('matched', {
-                room: roomName,
-                initiator: false,
-                partnerAlias: socket.alias
-            });
-        } else {
-            waitingQueue.push(socket);
-        }
+        processQueue();
     });
 
     socket.on('offer', (data) => {
@@ -107,12 +96,9 @@ io.on('connection', (socket) => {
         if (data && data.room) socket.to(data.room).emit('ice-candidate', data);
     });
 
-    // Universal message handler (mendukung berbagai jenis format dari frontend)
     const handleIncomingMessage = (data) => {
         const messageText = typeof data === 'string' ? data : (data?.message || data?.text);
         const targetRoom = (typeof data === 'object' && data?.room) ? data.room : socket.currentRoom;
-
-        console.log("Pesan masuk:", { messageText, targetRoom });
 
         if (targetRoom && messageText) {
             socket.to(targetRoom).emit('receive_message', {
@@ -143,7 +129,6 @@ io.on('connection', (socket) => {
             sock.leave(sock.currentRoom);
             sock.currentRoom = null;
         }
-        // Biarkan antrean dikelola murni oleh join_queue dan matchUsers/disconnect
     }
 });
 
