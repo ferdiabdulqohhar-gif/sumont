@@ -92,6 +92,7 @@ function createPeerConnection() {
     peerConnection.ontrack = (event) => {
         const remoteAudio = document.getElementById('remote-audio');
         remoteAudio.srcObject = event.streams[0];
+        remoteAudio.play().catch(e => console.log('Autoplay diblokir browser, butuh interaksi:', e));
     };
 
     // Kirim ICE candidate ke server
