@@ -737,7 +737,7 @@
             if (isConnecting) {
                 if (callStatusEl) {
                     callStatusEl.innerText = "";
-                    callStatusEl.style.display = "none";
+                    callStatusEl.classList.add("hidden");
                 }
                 if (timerDisplay) {
                     timerDisplay.innerText = "";
@@ -748,6 +748,7 @@
             } else {
                 if (callStatusEl) {
                     callStatusEl.innerText = statusText || "Call ended";
+                    callStatusEl.classList.remove("hidden");
                     callStatusEl.style.display = "";
                 }
                 if (timerDisplay) {
