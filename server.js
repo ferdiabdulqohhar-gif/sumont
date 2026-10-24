@@ -16,8 +16,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 let waitingQueue = [];
 
+// Fungsi untuk mengirim jumlah user online real-time ke semua klien
+function broadcastOnlineCount() {
+    const onlineCount = io.engine.clientsCount || 0;
+    io.emit('update_online_count', { count: onlineCount });
+}
+
 function leaveCurrentRoom(sock) {
     if (!sock) return;
+
     // Bersihkan antrean dari socket yang keluar
     waitingQueue = waitingQueue.filter(u => u && u.id !== sock.id);
 
@@ -41,8 +48,8 @@ function leaveCurrentRoom(sock) {
 }
 
 function matchUsers() {
-    // Pastikan tidak ada elemen undefined/null di dalam waitingQueue
-    waitingQueue = waitingQueue.filter(u => u && u.id);
+    // Filter antrean dari data undefined atau socket yang sudah tidak terhubung
+    waitingQueue = waitingQueue.filter(u => u && u.id && io.sockets.sockets.has(u.id));
 
     if (waitingQueue.length < 2) return;
 
@@ -63,13 +70,13 @@ function matchUsers() {
                 if (socket1 && socket2) {
                     const isExPartner = (socket1.lastPartnerId === socket2.id || socket2.lastPartnerId === socket1.id);
 
-                    // Jika ex-partner, CEK apakah MASING-MASING sudah antre minimal 5 detik
+                    // Jika ex-partner, cek syarat minimal 5 detik antre masing-masing
                     if (isExPartner) {
                         const user1Wait = now - (user1.joinedAt || now);
                         const user2Wait = now - (user2.joinedAt || now);
 
                         if (user1Wait < MIN_EX_WAIT_TIME || user2Wait < MIN_EX_WAIT_TIME) {
-                            continue; // Abaikan dulu, biarkan memutar sampai syarat terpenuhi
+                            continue; // Tahan dulu sampai keduanya melewati 5s
                         }
                     }
 
@@ -84,11 +91,8 @@ function matchUsers() {
                     socket1.emit('matched', { room: roomName, partnerAlias: user2.alias, initiator: true });
                     socket2.emit('matched', { room: roomName, partnerAlias: user1.alias, initiator: false });
 
-                    // Hapus user dari antrean secara aman menggunakan indexOf
-                    const idx1 = waitingQueue.indexOf(user1);
-                    const idx2 = waitingQueue.indexOf(user2);
-                    if (idx1 > -1) waitingQueue.splice(idx1, 1);
-                    if (idx2 > -1) waitingQueue.splice(idx2, 1);
+                    // Keluarkan pasangan ini dari waitingQueue
+                    waitingQueue = waitingQueue.filter(u => u.id !== user1.id && u.id !== user2.id);
 
                     return matchUsers();
                 }
@@ -97,12 +101,15 @@ function matchUsers() {
     }
 }
 
-// Cek match secara berkala tiap 1 detik untuk memproses ex-partner yang timernya sudah genap 5s
+// Check matching setiap 1 detik
 setInterval(() => {
     matchUsers();
 }, 1000);
 
 io.on('connection', (socket) => {
+    // Kirim update angka online setiap ada yang terkoneksi
+    broadcastOnlineCount();
+
     socket.on('join_queue', (data) => {
         leaveCurrentRoom(socket);
 
@@ -134,6 +141,7 @@ io.on('connection', (socket) => {
 
     socket.on('disconnect', () => {
         leaveCurrentRoom(socket);
+        broadcastOnlineCount();
     });
 });
 
