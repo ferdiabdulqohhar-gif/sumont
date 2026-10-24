@@ -4,32 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>sumont</title>
-    <script src="/socket.io/socket.io.js">
-
-        socket.on('update_online_count', (data) => {
-            console.log("Online count received:", data.count);
-            // Cari berbagai variasi ID atau class yang sering dipakai untuk online count
-            const possibleIds = ['online-count', 'onlineCount', 'user-count', 'online_users', 'active-users'];
-            let updated = false;
-            
-            for (const id of possibleIds) {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.innerText = data.count;
-                    updated = true;
-                }
-            }
-            
-            // Fallback: Jika tidak ketemu id di atas, cari elemen yang mengandung teks angka online atau class tertentu
-            if (!updated) {
-                const fallbackEl = document.querySelector('.online-count, [id*="online"], [id*="count"]');
-                if (fallbackEl) {
-                    fallbackEl.innerText = data.count;
-                }
-            }
-        });
-
-</script>
+    <script src="/socket.io/socket.io.js"></script>
     <style>
         * {
             box-sizing: border-box;
@@ -125,12 +100,6 @@
             border-radius: 50%;
             display: inline-block;
             box-shadow: 0 0 10px #38bdf8;
-        }
-        .timer-display {
-            font-size: 24px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 8px;
         }
         .partner-name {
             font-size: 28px;
@@ -451,13 +420,9 @@
             </div>
         </div>
     </div>
-
     <audio id="remote-audio" autoplay playsinline></audio>
-
     <script>
         const socket = io();
-
-
         let localStream = null;
         let peerConnection = null;
         let currentRoom = null;
@@ -468,15 +433,22 @@
         let secondsElapsed = 0;
         let lastActionType = 'end';
         let currentPartnerName = "";
-
         const aliasPool = [
             "Anonymous", "Nobody", "Unknown", "Nameless", "Stranger", 
             "Nowhere", "Unidentified", "Void", "Incognito", "Faceless", 
             "Invisible", "Blank", "Unlisted", "Phantom", "Shadow"
         ];
         
-        const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun2.l.google.com:19302' }, { urls: 'turn:openrelay.metered.ca:80', username: 'openrelay', credential: 'openrelay' }, { urls: 'turn:openrelay.metered.ca:443', username: 'openrelay', credential: 'openrelay' }] };
-        
+        const config = { 
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' }, 
+                { urls: 'stun:stun1.l.google.com:19302' }, 
+                { urls: 'stun:stun2.l.google.com:19302' }, 
+                { urls: 'turn:openrelay.metered.ca:80', username: 'openrelay', credential: 'openrelay' }, 
+                { urls: 'turn:openrelay.metered.ca:443', username: 'openrelay', credential: 'openrelay' }
+            ] 
+        };
+
         const viewHome = document.getElementById('view-home');
         const viewCall = document.getElementById('view-call');
         const timerDisplay = document.getElementById('timer-display');
@@ -502,7 +474,7 @@
         const btnSendMsg = document.getElementById('btn-send-msg');
         const remoteAudio = document.getElementById('remote-audio');
         const onlineCountEl = document.getElementById('online-count');
-
+        
         btnToggleSpeaker.classList.add('btn-active-speaker');
 
         socket.on('update_online_count', (data) => {
@@ -533,15 +505,11 @@
 
         async function startCall() {
             isSearchingCall = true;
-            isSearchingCall = true;
             isMuted = false;
             btnToggleMute.classList.remove('btn-off');
-
             const hasMic = await initMicrophone();
             if (!hasMic) return;
-
             const randomAlias = aliasPool[Math.floor(Math.random() * aliasPool.length)];
-
             currentPartnerName = "";
             currentRoom = null;
             iceCandidateQueue = [];
@@ -557,33 +525,28 @@
             controlsIncall.classList.remove('hidden');
             timerDisplay.innerText = "";
             partnerNameDisplay.innerText = "Connecting...";
-            
+
             const headerEl = document.getElementById('call-status-header');
             if (headerEl) {
                 headerEl.innerText = "";
                 headerEl.classList.add('hidden');
             }
             if (reportBtn) reportBtn.classList.add('hidden');
-
             socket.emit('join_queue', { language: langSelect.value, alias: randomAlias });
         }
 
         btnStartCall.addEventListener('click', startCall);
-
         btnNextSpin.addEventListener('click', () => {
             lastActionType = 'next';
             socket.emit('leave_room');
             showEndedState('Call ended');
         });
-
         btnHangupX.addEventListener('click', () => {
             lastActionType = 'end';
             socket.emit('leave_room');
             showEndedState('Call ended');
         });
-
         btnBackHome.addEventListener('click', goToHome);
-
         endedActionPill.addEventListener('click', () => {
             if (lastActionType === 'end') {
                 goToHome();
@@ -593,7 +556,6 @@
         });
 
         let isSearchingCall = false;
-
         function goToHome() {
             isSearchingCall = false;
             closeConnection();
@@ -679,31 +641,17 @@
                 socket.emit('leave_room');
                 return;
             }
-            if (!isSearchingCall) {
-                socket.emit('leave_room');
-                return;
-            }
             currentRoom = data.room;
             currentPartnerName = data.partnerAlias || "Anonymous";
             partnerNameDisplay.innerText = currentPartnerName;
-
+            
             const headerEl = document.getElementById('call-status-header');
             if (headerEl) {
                 headerEl.innerText = "";
                 headerEl.classList.add('hidden');
             }
             if (reportBtn) reportBtn.classList.remove('hidden');
-
-            // Saat tersambung (connected), pastikan Call ended disembunyikan dan Report & Block muncul
-            const callStatusHeader = document.getElementById('call-status-header');
-            if (callStatusHeader) {
-                callStatusHeader.innerText = "";
-                callStatusHeader.classList.add('hidden');
-            }
-            if (reportBtn) {
-                reportBtn.classList.remove('hidden');
-            }
-
+            
             startTimer();
             createPeerConnection(currentRoom);
             if (data.initiator) {
@@ -721,14 +669,12 @@
             if (!peerConnection) createPeerConnection(currentRoom);
             try {
                 await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
-                
                 while (iceCandidateQueue.length > 0) {
                     const candidate = iceCandidateQueue.shift();
                     try {
                         await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
                     } catch (e) {}
                 }
-
                 const answer = await peerConnection.createAnswer();
                 await peerConnection.setLocalDescription(answer);
                 socket.emit('answer', { room: currentRoom, answer: answer });
@@ -741,7 +687,6 @@
             if (peerConnection) {
                 try {
                     await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                    
                     while (iceCandidateQueue.length > 0) {
                         const candidate = iceCandidateQueue.shift();
                         try {
@@ -774,95 +719,90 @@
         });
 
         function showEndedState(statusText) {
-    setTimeout(() => {
-        try {
-            closeConnection();
-            stopTimer();
-            
-            const callStatusEl = document.getElementById("call-status-header");
-            const isConnecting = (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "");
+            setTimeout(() => {
+                try {
+                    closeConnection();
+                    stopTimer();
 
-            // Pastikan teks status selalu "Call ended" dan TAMPIL saat panggilan diakhiri
-            if (callStatusEl) {
-                callStatusEl.innerText = statusText || "Call ended";
-                callStatusEl.classList.remove("hidden");
-                callStatusEl.style.display = "";
-            }
+                    const callStatusEl = document.getElementById("call-status-header");
+                    const isConnecting = (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "");
+                    
+                    if (callStatusEl) {
+                        callStatusEl.innerText = statusText || "Call ended";
+                        callStatusEl.classList.remove("hidden");
+                        callStatusEl.style.display = "";
+                    }
+                    if (isConnecting) {
+                        if (timerDisplay) {
+                            timerDisplay.innerText = "";
+                            timerDisplay.style.display = "none";
+                        }
+                        if (partnerNameDisplay) partnerNameDisplay.innerText = "";
+                        if (reportBtn) reportBtn.classList.add("hidden");
+                    } else {
+                        if (timerDisplay) {
+                            timerDisplay.innerText = window.lastCallDuration || "00:00";
+                            timerDisplay.style.display = "";
+                        }
+                        if (partnerNameDisplay) partnerNameDisplay.innerText = currentPartnerName;
+                        if (reportBtn) reportBtn.classList.remove("hidden");
+                    }
 
-            if (isConnecting) {
-                // Jika mati saat masih connecting: sembunyikan timer & report button, bersihkan nama
-                if (timerDisplay) {
-                    timerDisplay.innerText = "";
-                    timerDisplay.style.display = "none";
-                }
-                if (partnerNameDisplay) partnerNameDisplay.innerText = "";
-                if (reportBtn) reportBtn.classList.add("hidden");
-            } else {
-                // Jika mati setelah tersambung: tampilkan timer akhir, nama partner, & report button
-                if (timerDisplay) {
-                    timerDisplay.innerText = window.lastCallDuration || "00:00";
-                    timerDisplay.style.display = "";
-                }
-                if (partnerNameDisplay) partnerNameDisplay.innerText = currentPartnerName;
-                if (reportBtn) reportBtn.classList.remove("hidden");
-            }
-            
-            if (chatModal) chatModal.classList.add("hidden");
-            if (chatNotifDot) chatNotifDot.classList.add("hidden");
-            if (viewHome) viewHome.classList.add("hidden");
-            if (viewCall) viewCall.classList.remove("hidden");
+                    if (chatModal) chatModal.classList.add("hidden");
+                    if (chatNotifDot) chatNotifDot.classList.add("hidden");
+                    if (viewHome) viewHome.classList.add("hidden");
+                    if (viewCall) viewCall.classList.remove("hidden");
+                    
+                    if (chatMsgs && endedChatHistory) {
+                        if (chatMsgs.children.length > 0) {
+                            endedChatHistory.innerHTML = chatMsgs.innerHTML;
+                            endedChatHistory.classList.remove("hidden");
+                        } else {
+                            endedChatHistory.classList.add("hidden");
+                        }
+                    }
 
-            if (chatMsgs && endedChatHistory) {
-                if (chatMsgs.children.length > 0) {
-                    endedChatHistory.innerHTML = chatMsgs.innerHTML;
-                    endedChatHistory.classList.remove("hidden");
-                } else {
-                    endedChatHistory.classList.add("hidden");
+                    if (lastActionType === "end") {
+                        if (endedActionPill) {
+                            endedActionPill.innerHTML = `
+                                <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
+                                End
+                            `;
+                        }
+                    } else {
+                        if (endedActionPill) {
+                            endedActionPill.innerHTML = `
+                                <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+                                Next
+                            `;
+                        }
+                    }
+                    if (controlsIncall) controlsIncall.classList.add("hidden");
+                    if (controlsEnded) controlsEnded.classList.remove("hidden");
+                } catch (err) {
+                    console.error("Error showing ended state:", err);
                 }
-            }
-            
-            if (lastActionType === "end") {
-                if (endedActionPill) {
-                    endedActionPill.innerHTML = `
-                        <svg viewBox="0 0 24 24"><path d="M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08c-.18-.17-.29-.42-.29-.7 0-.28.11-.53.29-.71C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28-.79-.73-1.68-1.36-2.66-1.85-.33-.16-.56-.51-.56-.9v-3.1C15.15 9.25 13.6 9 12 9z"/></svg>
-                        End
-                    `;
-                }
-            } else {
-                if (endedActionPill) {
-                    endedActionPill.innerHTML = `
-                        <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-                        Next
-                    `;
-                }
-            }
-            if (controlsIncall) controlsIncall.classList.add("hidden");
-            if (controlsEnded) controlsEnded.classList.remove("hidden");
-        } catch (err) {
-            console.error("Error showing ended state:", err);
+            }, 50);
         }
-    }, 50);
-}
 
         function createPeerConnection(room) {
             closeConnection();
             peerConnection = new RTCPeerConnection(config);
-            
+
             if (localStream) {
                 localStream.getTracks().forEach(track => {
                     peerConnection.addTrack(track, localStream);
                 });
             }
 
-            peerConnection.ontrack = (event) => {
-                remoteAudio.srcObject = event.streams[0];
-                remoteAudio.play().catch(err => console.log('Autoplay diblokir:', err));
-            };
-
             peerConnection.onicecandidate = (event) => {
-                if (event.candidate && currentRoom) {
+                if (event.candidate) {
                     socket.emit('ice-candidate', { room: currentRoom, candidate: event.candidate });
                 }
+            };
+
+            peerConnection.ontrack = (event) => {
+                remoteAudio.srcObject = event.streams[0];
             };
         }
 
@@ -876,28 +816,22 @@
         function startTimer() {
             stopTimer();
             secondsElapsed = 0;
-            timerDisplay.innerText = "00:00";
             timerInterval = setInterval(() => {
                 secondsElapsed++;
                 const mins = String(Math.floor(secondsElapsed / 60)).padStart(2, '0');
-                const secs = String(secondsElapsed % 60).padStart(2, '0');
-                window.lastCallDuration = `${mins}:${secs}`; timerDisplay.innerText = window.lastCallDuration;
+                const secs = String(Math.floor(secondsElapsed % 60)).padStart(2, '0');
+                const timeStr = `${mins}:${secs}`;
+                window.lastCallDuration = timeStr;
+                if (timerDisplay) timerDisplay.innerText = timeStr;
             }, 1000);
         }
 
         function stopTimer() {
-            if (timerInterval) clearInterval(timerInterval);
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
         }
     </script>
-
-<script>
-    if (typeof socket !== "undefined") {
-        socket.on("update_online_count", (data) => {
-            const el = document.getElementById("online-count");
-            if (el) el.innerText = data.count;
-        });
-    }
-</script>
-
 </body>
 </html>
