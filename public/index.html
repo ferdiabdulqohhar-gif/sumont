@@ -645,6 +645,17 @@
             currentRoom = data.room;
             currentPartnerName = data.partnerAlias || "Anonymous";
             partnerNameDisplay.innerText = currentPartnerName;
+
+            // Saat tersambung (connected), pastikan Call ended disembunyikan dan Report & Block muncul
+            const callStatusHeader = document.getElementById('call-status-header');
+            if (callStatusHeader) {
+                callStatusHeader.innerText = "";
+                callStatusHeader.classList.add('hidden');
+            }
+            if (reportBtn) {
+                reportBtn.classList.remove('hidden');
+            }
+
             startTimer();
             createPeerConnection(currentRoom);
             if (data.initiator) {
@@ -720,7 +731,7 @@
             closeConnection();
             stopTimer();
             
-            const callStatusEl = document.getElementById("call-status") || document.querySelector(".call-status-text");
+            const callStatusEl = document.getElementById("call-status-header");
             const isConnecting = (!currentPartnerName || currentPartnerName === "Connecting..." || currentPartnerName === "");
 
             if (isConnecting) {
