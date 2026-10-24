@@ -92,6 +92,9 @@ function createPeerConnection() {
     peerConnection.ontrack = (event) => {
         const remoteAudio = document.getElementById('remote-audio');
         remoteAudio.srcObject = event.streams[0];
+        console.log('Stream audio diterima:', event.streams[0]);
+        console.log('Jumlah track audio:', event.streams[0].getAudioTracks().length);
+        remoteAudio.play().then(() => console.log('Audio berhasil diputar!')).catch(e => console.log('Gagal play audio:', e));
         remoteAudio.play().catch(e => console.log('Autoplay diblokir browser, butuh interaksi:', e));
     };
 
