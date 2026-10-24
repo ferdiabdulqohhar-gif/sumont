@@ -23,31 +23,17 @@ function processQueue() {
             if (user1.language !== user2.language) continue;
 
             const isEx = (user1.lastPartnerId === user2.id || user2.lastPartnerId === user1.id);
+            const time1 = Date.now() - (user1.queuedAt || 0);
+            const time2 = Date.now() - (user2.queuedAt || 0);
 
-            if (!isEx) {
-                // Orang baru: Prioritas utama, langsung sikat tanpa syarat!
+            // LOGIKA MUTLAK:
+            // 1. Kalau bukan mantan (!isEx), sikat langsung!
+            // 2. Kalau mantan, tapi salah satu sudah nunggu > 5 detik, izinkan CLBK universal!
+            if (!isEx || time1 > 5000 || time2 > 5000) {
                 waitingQueue.splice(j, 1);
                 waitingQueue.splice(i, 1);
                 matchUsers(user1, user2);
                 return processQueue();
-            } else {
-                // Mantan: Jika antrean pas 2 orang (sepi) atau keduanya sudah > 5 detik, izinkan CLBK!
-                const time1 = Date.now() - (user1.queuedAt || 0);
-                const time2 = Date.now() - (user2.queuedAt || 0);
-                
-                const isOnlyThem = (waitingQueue.length === 2);
-                
-                if (isOnlyThem && (time1 > 5000 || time2 > 5000)) {
-                    waitingQueue.splice(j, 1);
-                    waitingQueue.splice(i, 1);
-                    matchUsers(user1, user2);
-                    return processQueue();
-                } else if (!isOnlyThem && time1 > 5000 && time2 > 5000) {
-                    waitingQueue.splice(j, 1);
-                    waitingQueue.splice(i, 1);
-                    matchUsers(user1, user2);
-                    return processQueue();
-                }
             }
         }
     }
