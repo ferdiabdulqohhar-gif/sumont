@@ -149,3 +149,8 @@ const PORT = process.env.PORT || 10000;
 server.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
+// Jalankan matchUsers tiap 1 detik agar timer 5 detik ex-partner terus diperiksa secara real-time
+setInterval(() => {
+    matchUsers();
+}, 1000);
