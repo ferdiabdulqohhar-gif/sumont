@@ -134,13 +134,16 @@ io.on('connection', (socket) => {
         leaveCurrentRoom(socket);
     });
 
-    socket.on('signal', (data) => {
-        if (socket.currentRoom) {
-            socket.to(socket.currentRoom).emit('signal', {
-                signal: data.signal,
-                from: socket.id
-            });
-        }
+    socket.on('offer', (data) => {
+        if (data.room) socket.to(data.room).emit('offer', data);
+    });
+
+    socket.on('answer', (data) => {
+        if (data.room) socket.to(data.room).emit('answer', data);
+    });
+
+    socket.on('ice-candidate', (data) => {
+        if (data.room) socket.to(data.room).emit('ice-candidate', data);
     });
 
     socket.on('disconnect', () => {
