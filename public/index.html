@@ -12,6 +12,30 @@
             }
         });
 
+
+        socket.on('update_online_count', (data) => {
+            console.log("Online count received:", data.count);
+            // Cari berbagai variasi ID atau class yang sering dipakai untuk online count
+            const possibleIds = ['online-count', 'onlineCount', 'user-count', 'online_users', 'active-users'];
+            let updated = false;
+            
+            for (const id of possibleIds) {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.innerText = data.count;
+                    updated = true;
+                }
+            }
+            
+            // Fallback: Jika tidak ketemu id di atas, cari elemen yang mengandung teks angka online atau class tertentu
+            if (!updated) {
+                const fallbackEl = document.querySelector('.online-count, [id*="online"], [id*="count"]');
+                if (fallbackEl) {
+                    fallbackEl.innerText = data.count;
+                }
+            }
+        });
+
 </script>
     <style>
         * {
