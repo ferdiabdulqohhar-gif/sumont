@@ -457,10 +457,7 @@
     <script>
         const socket = io();
 
-        // Paksa socket langsung disconnect saat user tutup tab/browser
-        window.addEventListener("beforeunload", () => {
-            if (socket) socket.disconnect();
-        });
+
         let localStream = null;
         let peerConnection = null;
         let currentRoom = null;
