@@ -6,6 +6,8 @@ const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
+    pingTimeout: 5000,
+    pingInterval: 2000,
     cors: {
         origin: "*",
         methods: ["GET", "POST"]
